@@ -162,3 +162,36 @@ lightbox?.addEventListener("keydown", (event) => {
 });
 
 document.querySelector("#year").textContent = new Date().getFullYear();
+// Tự động tải tin tức từ Google Sheet
+const GOOGLE_SHEET_API = "https://script.google.com/macros/s/AKfycbyEFWg9frlJKEN7FJgzyERmpM3gKW-PkrkBnwrSurUd4Q-GwH6p1Jg6WreThU2ONTtHug/exec";
+
+async function loadNewsFromSheet() {
+  const container = document.querySelector("#news-container");
+  if (!container) return;
+
+  try {
+    const response = await fetch(GOOGLE_SHEET_API);
+    const newsList = await response.json();
+
+    if (newsList && newsList.length > 0) {
+      container.innerHTML = newsList.map(item => {
+        const isSpecial = String(item.isSpecial).toLowerCase() === "true";
+        return `
+          <a href="${item.url || '#'}" target="_blank" rel="noopener noreferrer" class="news-item ${isSpecial ? 'special' : ''}">
+            <span class="news-tag ${isSpecial ? 'white' : ''}">${item.tag || 'Tin tức'}</span>
+            <h4>${item.title} ↗</h4>
+            <p>${item.desc || ''}</p>
+          </a>
+        `;
+      }).join("");
+    } else {
+      container.innerHTML = "<p>Hiện chưa có bản tin mới.</p>";
+    }
+  } catch (error) {
+    console.error("Lỗi khi tải tin tức từ Google Sheet:", error);
+    container.innerHTML = "<p>Không thể tải dữ liệu bản tin.</p>";
+  }
+}
+
+// Kích hoạt khi trang tải xong
+loadNewsFromSheet();
